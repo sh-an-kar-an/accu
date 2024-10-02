@@ -1,3 +1,11 @@
+# Django signals are executed within the same database transaction as the caller. 
+# When a signal is sent, the connected receivers are executed within the same database transaction that sent the signal.
+# This means that if the signal handling code performs any database operations, 
+# they will be part of the same transaction as the code that sent the signal.
+
+
+
+
 import os
 import sys
 from django.conf import settings
@@ -6,10 +14,10 @@ from django.db import models
 from django.db import transaction
 from django.dispatch import Signal
 
-# Configure Django
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
-# Create a settings module
+
 settings.configure(
     INSTALLED_APPS=[
         'django.contrib.contenttypes',
@@ -23,7 +31,7 @@ settings.configure(
     }
 )
 
-# Create the tables
+
 from django.db import connection
 cursor = connection.cursor()
 cursor.execute('''
@@ -33,28 +41,28 @@ cursor.execute('''
     )
 ''')
 
-# Define the signal and receiver
+
 my_signal = Signal()
 
 def receiver(sender, **kwargs):
     print("Receiver started")
-    # Simulate some database operation
+    
     cursor.execute('INSERT INTO mymodel (name) VALUES (%s)', ['Test'])
     print("Receiver finished")
 
 my_signal.connect(receiver)
 
-# Define the sender function
+
 def sender_function():
     print("Sender started")
     with transaction.atomic():
         try:
-            # Simulate some database operation
+            
             cursor.execute('INSERT INTO mymodel (name) VALUES (%s)', ['Sender'])
             my_signal.send(sender=None)
             print("Sender finished")
         except Exception as e:
             print(f"Exception caught: {e}")
 
-# Run the sender function
+
 sender_function()
